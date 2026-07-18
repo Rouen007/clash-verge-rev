@@ -161,6 +161,18 @@ pub struct IVerge {
     /// 自动检测当前节点延迟的间隔（分钟）
     pub auto_delay_detection_interval_minutes: Option<u64>,
 
+    /// 连续网络检测失败时自动切换出口节点
+    pub enable_auto_failover: Option<bool>,
+
+    /// 自动切换检测间隔（秒）
+    pub auto_failover_interval_seconds: Option<u64>,
+
+    /// 自动切换检测目标
+    pub auto_failover_test_url: Option<String>,
+
+    /// 自动切换的入口代理组
+    pub auto_failover_group: Option<String>,
+
     /// 是否使用内部的脚本支持，默认为真
     pub enable_builtin_enhanced: Option<bool>,
 
@@ -430,6 +442,10 @@ impl IVerge {
             proxy_guard_duration: Some(30),
             auto_close_connection: Some(true),
             auto_check_update: Some(true),
+            enable_auto_failover: Some(false),
+            auto_failover_interval_seconds: Some(15),
+            auto_failover_test_url: Some("https://www.tradingview.com/".into()),
+            auto_failover_group: Some("GLOBAL".into()),
             enable_builtin_enhanced: Some(true),
             auto_log_clean: Some(2), // 1: 1天, 2: 7天, 3: 30天, 4: 90天
             enable_auto_backup_schedule: Some(false),
@@ -533,6 +549,10 @@ impl IVerge {
         patch!(default_latency_timeout);
         patch!(enable_auto_delay_detection);
         patch!(auto_delay_detection_interval_minutes);
+        patch!(enable_auto_failover);
+        patch!(auto_failover_interval_seconds);
+        patch!(auto_failover_test_url);
+        patch!(auto_failover_group);
         patch!(enable_builtin_enhanced);
         patch!(proxy_layout_column);
         patch!(test_list);
