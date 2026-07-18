@@ -58,6 +58,12 @@ for ip in $original_dns; do
     fi
 done
 
+# TUN 配置会在每次配置重载时重新生成。DNS 已经是目标值且已有备份时，
+# 直接返回，避免把用户原始 DNS 覆盖成 Clash DNS。
+if [ -f .original_dns.txt ] && [ "$original_dns" = "$1" ]; then
+    exit 0
+fi
+
 # 更新DNS设置
 if [ "$is_valid_dns" = false ]; then
     echo "empty" >.original_dns.txt

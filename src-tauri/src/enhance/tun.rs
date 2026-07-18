@@ -64,8 +64,9 @@ pub fn use_tun(mut config: Mapping, enable: bool) -> Mapping {
 
             #[cfg(target_os = "macos")]
             {
+                // Keep the original system DNS until TUN is actually disabled. Rebuilding the
+                // generated profile must not repeatedly restore and overwrite it.
                 AsyncHandler::spawn(move || async move {
-                    crate::utils::resolve::dns::restore_public_dns().await;
                     crate::utils::resolve::dns::set_public_dns("114.114.114.114".to_string()).await;
                 });
             }
