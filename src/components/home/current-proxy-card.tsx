@@ -1,6 +1,7 @@
 /* eslint-disable @eslint-react/set-state-in-effect */
 import {
   AccessTimeRounded,
+  BoltRounded,
   ChevronRight,
   NetworkCheckRounded,
   WifiOff as SignalError,
@@ -21,6 +22,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   type SelectChangeEvent,
   Tooltip,
   Typography,
@@ -33,6 +35,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { delayGroup } from 'tauri-plugin-mihomo-api'
 
+import autoFailoverBackground from '@/assets/image/auto-failover-lightning.png'
 import { EnhancedCard } from '@/components/home/enhanced-card'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useProxySelection } from '@/hooks/use-proxy-selection'
@@ -116,9 +119,10 @@ export const CurrentProxyCard = () => {
   const { rules } = useRulesData()
   const { refreshProxy } = useAppRefreshers()
   const { isCoreDataPending } = useCoreDataStatus()
-  const { verge } = useVerge()
+  const { verge, patchVerge } = useVerge()
   const { current: currentProfile } = useProfiles()
   const autoDelayEnabled = verge?.enable_auto_delay_detection ?? false
+  const autoFailoverEnabled = verge?.enable_auto_failover ?? false
   const defaultLatencyTimeout = verge?.default_latency_timeout
   const autoDelayIntervalMs = useMemo(() => {
     const rawInterval = verge?.auto_delay_detection_interval_minutes
@@ -129,6 +133,10 @@ export const CurrentProxyCard = () => {
     return Math.max(1, Math.round(intervalMinutes)) * 60 * 1000
   }, [verge?.auto_delay_detection_interval_minutes])
   const currentProfileId = currentProfile?.uid || null
+
+  const toggleAutoFailover = useLockFn(async () => {
+    await patchVerge({ enable_auto_failover: !autoFailoverEnabled })
+  })
 
   const getProfileStorageKey = useCallback(
     (baseKey: string) =>
@@ -846,6 +854,7 @@ export const CurrentProxyCard = () => {
         </Tooltip>
       }
       iconColor={currentProxy ? 'primary' : undefined}
+      backgroundImage={autoFailoverBackground}
       action={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tooltip
@@ -883,6 +892,58 @@ export const CurrentProxyCard = () => {
         </Box>
       }
     >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          p: 1.25,
+          mb: 2,
+          borderRadius: 2,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(20, 25, 43, 0.58)'
+              : 'rgba(255, 255, 255, 0.58)',
+          backdropFilter: 'blur(14px) saturate(135%)',
+          boxShadow: `0 10px 28px ${alpha(theme.palette.primary.main, 0.1)}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.1 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: 1.5,
+              color: 'primary.main',
+              backgroundColor: alpha(theme.palette.primary.main, 0.14),
+            }}
+          >
+            <BoltRounded fontSize="small" />
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {t('home.components.currentProxy.autoFailover.title')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {t('home.components.currentProxy.autoFailover.description')}
+            </Typography>
+          </Box>
+        </Box>
+        <Switch
+          checked={autoFailoverEnabled}
+          onChange={() => void toggleAutoFailover()}
+          color="primary"
+          slotProps={{
+            input: {
+              'aria-label': t('home.components.currentProxy.autoFailover.title'),
+            },
+          }}
+        />
+      </Box>
       {isCoreDataPending ? (
         <Box sx={{ py: 4, height: 24 }} />
       ) : currentProxy ? (

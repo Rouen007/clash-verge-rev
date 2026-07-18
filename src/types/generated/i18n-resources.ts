@@ -68,6 +68,10 @@ export interface TranslationResources {
           actions: {
             refreshDelay: string
           }
+          autoFailover: {
+            description: string
+            title: string
+          }
           labels: {
             directMode: string
             globalMode: string

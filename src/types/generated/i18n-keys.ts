@@ -80,6 +80,8 @@ export const translationKeys = [
   'home.components.currentProxy.labels.group',
   'home.components.currentProxy.labels.proxy',
   'home.components.currentProxy.labels.noActiveNode',
+  'home.components.currentProxy.autoFailover.title',
+  'home.components.currentProxy.autoFailover.description',
   'home.components.tests.title',
   'home.components.traffic.metrics.uploadSpeed',
   'home.components.traffic.metrics.downloadSpeed',
