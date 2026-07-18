@@ -370,10 +370,10 @@ const HomePage = () => {
       contentStyle={{
         padding: 2,
         minHeight: '100%',
-        backgroundImage: `linear-gradient(90deg, rgba(247, 250, 255, 0.68), rgba(245, 248, 255, 0.2)), url(${homeBackground})`,
+        backgroundColor: '#edf3ff',
+        backgroundImage: `linear-gradient(90deg, rgba(247, 250, 255, 0.08), rgba(245, 248, 255, 0.01)), url(${homeBackground})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
+        backgroundPosition: '70% center',
       }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center' }}>

@@ -18,7 +18,6 @@ import {
   Menu,
   MenuItem,
   Paper,
-  SvgIcon,
   ThemeProvider,
 } from '@mui/material'
 import dayjs from 'dayjs'
@@ -36,9 +35,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
-import iconDark from '@/assets/image/icon_dark.svg?react'
-import iconLight from '@/assets/image/icon_light.svg?react'
-import LogoSvg from '@/assets/image/logo.svg?react'
+import lightningGuardianIcon from '@/assets/image/lightning-guardian-icon.png'
 import { BaseErrorBoundary, BaseLoading } from '@/components/base'
 import { LayoutItem } from '@/components/layout/layout-item'
 import { LayoutTraffic } from '@/components/layout/layout-traffic'
@@ -351,18 +348,32 @@ const Layout = () => {
                   justifyContent: 'space-between',
                 }}
               >
-                <SvgIcon
-                  component={isDark ? iconDark : iconLight}
-                  style={{
+                <Box
+                  component="img"
+                  src={lightningGuardianIcon}
+                  alt=""
+                  sx={{
                     height: '36px',
                     width: '36px',
                     marginTop: '-3px',
                     marginRight: '5px',
                     marginLeft: '-3px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
                   }}
-                  inheritViewBox
                 />
-                <LogoSvg fill={isDark ? 'white' : 'black'} />
+                <Box
+                  component="span"
+                  sx={{
+                    color: isDark ? 'white' : 'black',
+                    fontSize: 22,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Clash Verge
+                </Box>
               </div>
               <UpdateButton className="the-newbtn" />
             </div>

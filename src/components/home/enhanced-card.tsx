@@ -53,9 +53,9 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
           backgroundColor: isDark ? '#282a36' : '#ffffff',
           ...(glass && {
             backgroundColor: isDark
-              ? 'rgba(24, 28, 42, 0.7)'
-              : 'rgba(255, 255, 255, 0.72)',
-            backdropFilter: 'blur(18px) saturate(135%)',
+              ? 'rgba(24, 28, 42, 0.3)'
+              : 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px) saturate(120%)',
             border: isDark
               ? '1px solid rgba(184, 201, 255, 0.14)'
               : '1px solid rgba(255, 255, 255, 0.68)',
