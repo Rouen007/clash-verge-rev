@@ -11,6 +11,7 @@ interface EnhancedCardProps {
   minHeight?: number | string
   noContentPadding?: boolean
   backgroundImage?: string
+  glass?: boolean
 }
 
 // 自定义卡片组件
@@ -25,6 +26,7 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
       minHeight,
       noContentPadding = false,
       backgroundImage,
+      glass = false,
     },
     ref,
   ) => {
@@ -49,6 +51,18 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
           flexDirection: 'column',
           borderRadius: 2,
           backgroundColor: isDark ? '#282a36' : '#ffffff',
+          ...(glass && {
+            backgroundColor: isDark
+              ? 'rgba(24, 28, 42, 0.7)'
+              : 'rgba(255, 255, 255, 0.72)',
+            backdropFilter: 'blur(18px) saturate(135%)',
+            border: isDark
+              ? '1px solid rgba(184, 201, 255, 0.14)'
+              : '1px solid rgba(255, 255, 255, 0.68)',
+            boxShadow: isDark
+              ? '0 18px 42px rgba(5, 8, 24, 0.24)'
+              : '0 18px 42px rgba(74, 92, 144, 0.14)',
+          }),
           ...(backgroundImage && {
             backgroundImage: `${
               isDark

@@ -35,7 +35,6 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { delayGroup } from 'tauri-plugin-mihomo-api'
 
-import autoFailoverBackground from '@/assets/image/auto-failover-lightning.png'
 import { EnhancedCard } from '@/components/home/enhanced-card'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useProxySelection } from '@/hooks/use-proxy-selection'
@@ -854,7 +853,7 @@ export const CurrentProxyCard = () => {
         </Tooltip>
       }
       iconColor={currentProxy ? 'primary' : undefined}
-      backgroundImage={autoFailoverBackground}
+      glass
       action={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tooltip

@@ -374,6 +374,7 @@ export const HomeProfileCard = ({
       icon={<CloudUploadOutlined />}
       iconColor="info"
       action={cardAction}
+      glass
     >
       {current ? (
         <ProfileDetails
