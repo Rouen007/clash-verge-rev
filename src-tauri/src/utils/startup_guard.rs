@@ -4,10 +4,7 @@
 //! created its utun device. Another VPN/TUN client can leave a conflicting
 //! route behind, so startup must validate the effective kernel state.
 
-use crate::{
-    config::Config,
-    core::{CoreManager, handle},
-};
+use crate::{config::Config, core::handle::Handle};
 use anyhow::{Context, Result, bail};
 use clash_verge_logging::{Type, logging};
 use std::time::Duration;
@@ -53,7 +50,7 @@ pub async fn verify_tun_ready() -> Result<()> {
     }
 
     let message = "Clash TUN 已开启，但启动后未确认自己的 utun 和默认路由生效；可能与其他 VPN/TUN 客户端冲突";
-    handle::notice_message("tun::startup_check_failed", message);
+    Handle::notice_message("tun::startup_check_failed", message);
     bail!("{message}")
 }
 
