@@ -13,6 +13,8 @@ pub mod schtasks;
 pub mod server;
 pub mod singleton;
 pub mod speed;
+#[cfg(target_os = "macos")]
+pub mod startup_guard;
 pub mod tmpl;
 #[cfg(target_os = "macos")]
 pub mod tray_speed;

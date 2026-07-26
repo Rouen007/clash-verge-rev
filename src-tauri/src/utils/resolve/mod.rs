@@ -201,7 +201,15 @@ pub(super) async fn init_service_manager() {
 }
 
 pub(super) async fn init_core_manager() {
-    logging_error!(Type::Setup, CoreManager::global().init().await);
+    if let Err(e) = CoreManager::global().init().await {
+        logging!(error, Type::Setup, "Core startup failed: {e}");
+        return;
+    }
+
+    #[cfg(target_os = "macos")]
+    if let Err(e) = crate::utils::startup_guard::verify_tun_ready().await {
+        logging!(error, Type::Setup, "TUN startup verification failed: {e}");
+    }
 }
 
 pub(super) async fn init_system_proxy() {

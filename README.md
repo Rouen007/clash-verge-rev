@@ -42,6 +42,35 @@ Supports Windows (x64/x86), Linux (x64/arm64) and macOS 11+ (intel/apple).
 
 #### 安装说明和常见问题，请到 [文档页](https://clash-verge-rev.github.io/) 查看
 
+### macOS TUN/DNS 稳定性说明
+
+macOS 开启 TUN 后，Clash Verge 会接管虚拟网卡、默认路由和系统 DNS。请不要在 TUN 尚未关闭时直接强制退出 App；如果同时运行其他 VPN/TUN 客户端（例如夜煞云），它们可能抢占默认路由或留下 DNS/路由状态，导致 Clash 的 TUN 配置显示为开启但实际没有生效。
+
+本版本在启动后会进行一次网络状态自检：
+
+- 检查 Clash 自己的 `utun` 是否创建成功；
+- 检查 `198.18.0.x` Fake-IP 地址是否存在；
+- 检查 macOS 默认路由是否确实指向 `utun`；
+- 如果自检失败，会在日志中记录 `TUN startup verification failed`，并提示可能存在其他 VPN/TUN 客户端冲突。
+
+#### 推荐的 macOS 退出顺序
+
+1. 在 Clash Verge 中关闭 TUN。
+2. 关闭系统代理。
+3. 确认浏览器可以正常访问网页。
+4. 再退出 Clash Verge。
+
+如果 App 意外退出后无法上网，先重新启动 Clash Verge，等待网络恢复，再按上面的顺序关闭 TUN 和系统代理。不要直接删除 App 或强制结束进程。
+
+#### 从源码构建 macOS 安装包
+
+```shell
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+构建完成后，安装包位于 `src-tauri/target/release/bundle/dmg/`。替换旧版本前请保持旧版可用，并先关闭 TUN 与系统代理；首次启动新版本时，macOS 可能会要求重新安装 Clash Verge Service。
+
 ### TG 频道: [@clash_verge_rev](https://t.me/clash_verge_re)
 
 ---
