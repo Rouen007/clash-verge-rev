@@ -50,7 +50,7 @@ macOS 开启 TUN 后，Clash Verge 会接管虚拟网卡、默认路由和系统
 
 - 检查 Clash 自己的 `utun` 是否创建成功；
 - 检查 `198.18.0.x` Fake-IP 地址是否存在；
-- 检查 macOS 默认路由是否确实指向 `utun`；
+- 检查实际外网流量路由（例如 `1.1.1.1`）是否确实指向 Clash 的 `utun`；macOS/gVisor 下默认 LAN 路由仍显示为 `en0` 是正常的；
 - 如果自检失败，会在日志中记录 `TUN startup verification failed`，并提示可能存在其他 VPN/TUN 客户端冲突。
 
 #### 推荐的 macOS 退出顺序

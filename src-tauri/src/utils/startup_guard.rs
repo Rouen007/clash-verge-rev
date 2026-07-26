@@ -13,7 +13,7 @@ use tokio::{process::Command, time::sleep};
 const TUN_READY_RETRIES: usize = 10;
 const TUN_READY_RETRY_DELAY: Duration = Duration::from_millis(500);
 
-/// Verify that Clash's macOS TUN is actually present and owns the default route.
+/// Verify that Clash's macOS TUN is present and owns an effective internet route.
 ///
 /// This is intentionally observational: we do not kill another VPN/TUN client
 /// because an arbitrary `utun` may belong to iCloud Private Relay, WireGuard,
@@ -25,18 +25,18 @@ pub async fn verify_tun_ready() -> Result<()> {
 
     for attempt in 1..=TUN_READY_RETRIES {
         let ifconfig = command_output("/sbin/ifconfig", &[]).await?;
-        let route = command_output("/sbin/route", &["-n", "get", "default"]).await?;
+        // macOS/gVisor may intentionally keep the LAN default route on en0 and
+        // install split routes (for example 1.0.0.0/8) through Clash's utun.
+        let route = command_output("/sbin/route", &["-n", "get", "1.1.1.1"]).await?;
 
         let has_clash_tun = has_clash_tun_interface(&ifconfig);
-        let default_route_is_tun = route
-            .lines()
-            .any(|line| line.trim_start().starts_with("interface:") && line.contains("utun"));
+        let traffic_route_is_tun = route_uses_clash_tun(&route);
 
-        if has_clash_tun && default_route_is_tun {
+        if has_clash_tun && traffic_route_is_tun {
             logging!(
                 info,
                 Type::Setup,
-                "macOS TUN startup check passed: Clash utun is present and owns the default route"
+                "macOS TUN startup check passed: Clash utun is present and owns the effective traffic route"
             );
             return Ok(());
         }
@@ -44,12 +44,12 @@ pub async fn verify_tun_ready() -> Result<()> {
         logging!(
             debug,
             Type::Setup,
-            "macOS TUN startup check {attempt}/{TUN_READY_RETRIES}: clash_utun={has_clash_tun}, default_route_is_utun={default_route_is_tun}"
+            "macOS TUN startup check {attempt}/{TUN_READY_RETRIES}: clash_utun={has_clash_tun}, traffic_route_is_utun={traffic_route_is_tun}"
         );
         sleep(TUN_READY_RETRY_DELAY).await;
     }
 
-    let message = "Clash TUN 已开启，但启动后未确认自己的 utun 和默认路由生效；可能与其他 VPN/TUN 客户端冲突";
+    let message = "Clash TUN 已开启，但启动后未确认自己的 utun 和外网流量路由生效；可能与其他 VPN/TUN 客户端冲突";
     Handle::notice_message("tun::startup_check_failed", message);
     bail!("{message}")
 }
@@ -87,9 +87,20 @@ fn has_clash_tun_interface(ifconfig: &str) -> bool {
     in_utun && has_clash_address
 }
 
+fn route_uses_clash_tun(route: &str) -> bool {
+    let has_utun = route
+        .lines()
+        .any(|line| line.trim_start().starts_with("interface:") && line.contains("utun"));
+    let has_clash_gateway = route
+        .lines()
+        .any(|line| line.trim_start().starts_with("gateway:") && line.contains("198.18.0.1"));
+
+    has_utun && has_clash_gateway
+}
+
 #[cfg(test)]
 mod tests {
-    use super::has_clash_tun_interface;
+    use super::{has_clash_tun_interface, route_uses_clash_tun};
 
     #[test]
     fn recognizes_clash_utun_address() {
@@ -101,5 +112,17 @@ mod tests {
     fn ignores_non_clash_utun_address() {
         let ifconfig = "utun3: flags=8051<UP>\n\tinet 10.0.0.2 --> 10.0.0.1 netmask 0xffffff00\n";
         assert!(!has_clash_tun_interface(ifconfig));
+    }
+
+    #[test]
+    fn recognizes_split_route_through_clash_tun() {
+        let route = "destination: 1.0.0.0\n    gateway: 198.18.0.1\n  interface: utun9\n";
+        assert!(route_uses_clash_tun(route));
+    }
+
+    #[test]
+    fn ignores_lan_default_route() {
+        let route = "destination: default\n    gateway: 192.168.0.1\n  interface: en0\n";
+        assert!(!route_uses_clash_tun(route));
     }
 }
