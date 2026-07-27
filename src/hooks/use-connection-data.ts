@@ -4,6 +4,10 @@ import { MihomoWebSocket } from 'tauri-plugin-mihomo-api'
 const MAX_CLOSED_CONNS_NUM = 500
 const CONNECTION_UPDATE_THROTTLE_MS = 500
 const CONNECTION_RECONNECT_DELAY_MS = 1_000
+const DOMAIN_TRAFFIC_WINDOW_MS = 24 * 60 * 60 * 1000
+const DOMAIN_TRAFFIC_BUCKET_MS = 60 * 1000
+const DOMAIN_TRAFFIC_STORAGE_KEY = 'clash-verge-domain-traffic-24h'
+const DOMAIN_TRAFFIC_PERSIST_INTERVAL_MS = 5_000
 
 type ConnectionMetadata = IConnectionsItem['metadata']
 type ConnectionListener = () => void
@@ -28,8 +32,121 @@ interface ConnectionSummaryData {
   activeConnectionCount: number
 }
 
+interface DomainTrafficUsage {
+  domain: string
+  upload: number
+  download: number
+}
+
+interface DomainTrafficBucket {
+  timestamp: number
+  domains: Record<string, { upload: number; download: number }>
+}
+
 const initConnSummaryData: ConnectionSummaryData = {
   activeConnectionCount: 0,
+}
+
+const loadDomainTrafficBuckets = (): DomainTrafficBucket[] => {
+  if (typeof window === 'undefined') return []
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(DOMAIN_TRAFFIC_STORAGE_KEY) || '[]',
+    ) as DomainTrafficBucket[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+let domainTrafficBuckets = loadDomainTrafficBuckets()
+let domainTrafficSnapshot: DomainTrafficUsage[] = []
+let lastDomainTrafficPersistAt = 0
+const domainTrafficListeners = new Set<ConnectionListener>()
+
+const pruneDomainTrafficBuckets = (now: number) => {
+  const cutoff = now - DOMAIN_TRAFFIC_WINDOW_MS
+  domainTrafficBuckets = domainTrafficBuckets.filter(
+    (bucket) => bucket.timestamp > cutoff,
+  )
+}
+
+const rebuildDomainTrafficSnapshot = (now: number) => {
+  pruneDomainTrafficBuckets(now)
+  const totals = new Map<string, { upload: number; download: number }>()
+
+  for (const bucket of domainTrafficBuckets) {
+    for (const [domain, usage] of Object.entries(bucket.domains)) {
+      const total = totals.get(domain) || { upload: 0, download: 0 }
+      total.upload += usage.upload
+      total.download += usage.download
+      totals.set(domain, total)
+    }
+  }
+
+  domainTrafficSnapshot = [...totals.entries()]
+    .map(([domain, usage]) => ({ domain, ...usage }))
+    .sort((left, right) =>
+      right.upload + right.download - (left.upload + left.download),
+    )
+  domainTrafficListeners.forEach((listener) => listener())
+}
+
+const persistDomainTrafficBuckets = (now: number) => {
+  if (typeof window === 'undefined') return
+  if (now - lastDomainTrafficPersistAt < DOMAIN_TRAFFIC_PERSIST_INTERVAL_MS) return
+  lastDomainTrafficPersistAt = now
+  try {
+    window.localStorage.setItem(
+      DOMAIN_TRAFFIC_STORAGE_KEY,
+      JSON.stringify(domainTrafficBuckets),
+    )
+  } catch {
+    // Storage may be unavailable or full; in-memory statistics still work.
+  }
+}
+
+const domainForConnection = (connection: IConnectionsItem) => {
+  const host = connection.metadata.host?.trim()
+  const remoteDestination = connection.metadata.remoteDestination?.trim()
+  const destinationIP = connection.metadata.destinationIP?.trim()
+  // Mihomo's host/remoteDestination fields are preferred over raw IPs.
+  return host || remoteDestination || destinationIP || 'Unknown'
+}
+
+const recordDomainTrafficDeltas = (
+  connections: IConnectionsItem[],
+  previousById: Map<string, IConnectionsItem>,
+) => {
+  const now = Date.now()
+  const bucketTimestamp =
+    Math.floor(now / DOMAIN_TRAFFIC_BUCKET_MS) * DOMAIN_TRAFFIC_BUCKET_MS
+  let bucket = domainTrafficBuckets.find(
+    (item) => item.timestamp === bucketTimestamp,
+  )
+
+  for (const connection of connections) {
+    const previous = previousById.get(connection.id)
+    if (!previous) continue
+
+    const upload = Math.max(0, connection.upload - previous.upload)
+    const download = Math.max(0, connection.download - previous.download)
+    if (upload === 0 && download === 0) continue
+
+    if (!bucket) {
+      bucket = { timestamp: bucketTimestamp, domains: {} }
+      domainTrafficBuckets.push(bucket)
+    }
+
+    const domain = domainForConnection(connection)
+    const usage = bucket.domains[domain] || { upload: 0, download: 0 }
+    usage.upload += upload
+    usage.download += download
+    bucket.domains[domain] = usage
+  }
+
+  rebuildDomainTrafficSnapshot(now)
+  persistDomainTrafficBuckets(now)
 }
 
 let connectionData: ConnectionMonitorData = initConnData
@@ -53,7 +170,9 @@ const notifySummaryListeners = () => {
 }
 
 const hasConnectionSubscribers = () =>
-  connectionListeners.size > 0 || summaryListeners.size > 0
+  connectionListeners.size > 0 ||
+  summaryListeners.size > 0 ||
+  domainTrafficListeners.size > 0
 
 const sameMetadata = (left: ConnectionMetadata, right: ConnectionMetadata) =>
   metadataValue(left.network) === metadataValue(right.network) &&
@@ -159,6 +278,8 @@ const mergeConnectionSnapshot = (
     previousActiveById.set(previousConnection.id, previousConnection)
   }
 
+  recordDomainTrafficDeltas(nextConnections, previousActiveById)
+
   const activeConnections: IConnectionsItem[] = []
   for (let i = 0; i < nextConnections.length; i++) {
     const connection = nextConnections[i]
@@ -231,10 +352,10 @@ const flushPendingMessage = () => {
   connectionSummary = mergeConnectionSummary(payload)
   notifySummaryListeners()
 
-  if (connectionListeners.size === 0) return
-
   connectionData = mergeConnectionSnapshot(payload, connectionData)
-  notifyConnectionListeners()
+  if (connectionListeners.size > 0) {
+    notifyConnectionListeners()
+  }
 }
 
 const enqueueConnectionMessage = (messageData: string) => {
@@ -421,4 +542,32 @@ export const useConnectionSummaryData = (options?: { enabled?: boolean }) => {
     response,
     refreshGetClashConnectionSummary,
   }
+}
+
+const getDomainTrafficSnapshot = () => domainTrafficSnapshot
+
+const subscribeDomainTraffic = (listener: ConnectionListener) => {
+  domainTrafficListeners.add(listener)
+  rebuildDomainTrafficSnapshot(Date.now())
+  startConnectionMonitor()
+  return () => {
+    domainTrafficListeners.delete(listener)
+    stopConnectionMonitorIfIdle()
+  }
+}
+
+export const useDomainTrafficUsage24h = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled ?? true
+  const subscribe = useCallback(
+    (listener: ConnectionListener) =>
+      enabled ? subscribeDomainTraffic(listener) : () => {},
+    [enabled],
+  )
+  const data = useSyncExternalStore(
+    subscribe,
+    getDomainTrafficSnapshot,
+    getDomainTrafficSnapshot,
+  )
+
+  return { data }
 }
