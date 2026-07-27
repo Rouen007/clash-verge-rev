@@ -16,7 +16,6 @@ import { useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 // test icons
-import apple from '@/assets/image/test/apple.svg?raw'
 import github from '@/assets/image/test/github.svg?raw'
 import google from '@/assets/image/test/google.svg?raw'
 import youtube from '@/assets/image/test/youtube.svg?raw'
@@ -44,9 +43,9 @@ const ScrollBox = styled(Box)(({ theme }) => ({
 const DEFAULT_TEST_LIST = [
   {
     uid: nanoid(),
-    name: 'Apple',
-    url: 'https://www.apple.com',
-    icon: apple,
+    name: 'TradingView',
+    url: 'https://www.tradingview.com/',
+    icon: 'https://www.tradingview.com/favicon.ico',
   },
   {
     uid: nanoid(),
@@ -78,9 +77,19 @@ export const TestCard = () => {
   const { verge, mutateVerge, patchVerge } = useVerge()
   const viewerRef = useRef<TestViewerRef>(null)
 
-  // 使用useMemo优化测试列表，避免每次渲染重新计算
+  // 使用useMemo优化测试列表，避免每次渲染重新计算。
+  // 同时迁移旧配置：移除 Apple，补入 TradingView。
   const testList = useMemo(() => {
-    return verge?.test_list ?? DEFAULT_TEST_LIST
+    if (!verge?.test_list) return DEFAULT_TEST_LIST
+
+    const migrated = verge.test_list.filter(
+      (item) => item.name !== 'Apple' && item.url !== 'https://www.apple.com',
+    )
+    const hasTradingView = migrated.some(
+      (item) => item.url === 'https://www.tradingview.com/',
+    )
+
+    return hasTradingView ? migrated : [DEFAULT_TEST_LIST[0], ...migrated]
   }, [verge?.test_list])
 
   // 使用useCallback优化函数引用，避免不必要的重新渲染
@@ -139,12 +148,15 @@ export const TestCard = () => {
     [testList, verge, mutateVerge, patchVerge],
   )
 
-  // 仅在verge首次加载时初始化测试列表
+  // 初始化默认列表，并持久化 Apple → TradingView 的迁移结果。
   useEffect(() => {
-    if (verge && !verge.test_list) {
-      patchVerge({ test_list: DEFAULT_TEST_LIST })
+    if (!verge) return
+
+    const current = verge.test_list
+    if (!current || JSON.stringify(current) !== JSON.stringify(testList)) {
+      patchVerge({ test_list: testList })
     }
-  }, [verge, patchVerge])
+  }, [verge, testList, patchVerge])
 
   // 使用useMemo优化UI内容，减少渲染计算
   const renderTestItems = useMemo(
