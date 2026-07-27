@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # 验证IPv4地址格式
 function is_valid_ipv4() {
@@ -44,6 +45,11 @@ hardware_port=$(networksetup -listnetworkserviceorder | awk -v dev="$nic" '
     /^\([0-9]+\) /{port=$0; sub(/^\([0-9]+\) /, "", port)} 
     /\(Hardware Port:/{interface=$NF;sub(/\)/, "", interface); if (interface == dev) {print port; exit}}
 ')
+
+if [ -z "$hardware_port" ]; then
+    echo "failed to resolve network service for interface $nic" >&2
+    exit 1
+fi
 
 # 获取当前DNS设置
 original_dns=$(networksetup -getdnsservers "$hardware_port")

@@ -51,6 +51,20 @@ pub async fn verify_tun_ready() -> Result<()> {
 
     let message = "Clash TUN 已开启，但启动后未确认自己的 utun 和外网流量路由生效；可能与其他 VPN/TUN 客户端冲突";
     Handle::notice_message("tun::startup_check_failed", message);
+    let disable_tun = serde_json::json!({ "tun": { "enable": false } });
+    if let Err(e) = Handle::mihomo().await.patch_base_config(&disable_tun).await {
+        logging!(
+            warn,
+            Type::Setup,
+            "failed to disable Clash TUN after startup check: {e}"
+        );
+    } else {
+        logging!(
+            warn,
+            Type::Setup,
+            "已关闭未确认生效的 Clash TUN，避免与其他 VPN/TUN 继续冲突"
+        );
+    }
     bail!("{message}")
 }
 

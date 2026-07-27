@@ -4,7 +4,7 @@ use crate::module::lightweight;
 use crate::utils;
 use crate::utils::window_manager::WindowManager;
 use clash_verge_logging::{Type, logging};
-use tokio::time::{Duration, timeout};
+use tokio::time::{Duration, sleep, timeout};
 
 pub async fn open_or_close_dashboard() {
     if lightweight::is_in_lightweight_mode() {
@@ -40,112 +40,10 @@ pub async fn quit() {
 
 pub async fn clean_async() -> bool {
     logging!(info, Type::System, "开始执行异步清理操作...");
-
-    // 重置系统代理
-    let proxy_task = tokio::task::spawn(async {
-        let sys_proxy_enabled = Config::verge().await.data_arc().enable_system_proxy.unwrap_or(false);
-        if !sys_proxy_enabled {
-            logging!(info, Type::Window, "系统代理未启用，跳过重置");
-            return true;
-        }
-
-        logging!(info, Type::Window, "开始重置系统代理...");
-        match timeout(Duration::from_millis(1500), sysopt::Sysopt::global().reset_sysproxy()).await {
-            Ok(Ok(_)) => {
-                logging!(info, Type::Window, "系统代理已重置");
-                true
-            }
-            Ok(Err(e)) => {
-                logging!(warn, Type::Window, "Warning: 重置系统代理失败: {e}");
-                false
-            }
-            Err(_) => {
-                logging!(warn, Type::Window, "Warning: 重置系统代理超时，继续退出");
-                false
-            }
-        }
-    });
-
-    // 关闭 Tun 模式 + 停止核心服务
-    let core_task = tokio::task::spawn(async {
-        logging!(info, Type::System, "disable tun");
-        let tun_enabled = Config::verge().await.data_arc().enable_tun_mode.unwrap_or(false);
-        if tun_enabled {
-            let disable_tun = serde_json::json!({ "tun": { "enable": false } });
-
-            logging!(info, Type::System, "send disable tun request to mihomo");
-            match timeout(
-                Duration::from_millis(1000),
-                handle::Handle::mihomo().await.patch_base_config(&disable_tun),
-            )
-            .await
-            {
-                Ok(Ok(_)) => {
-                    logging!(info, Type::Window, "TUN模式已禁用");
-                }
-                Ok(Err(e)) => {
-                    logging!(warn, Type::Window, "Warning: 禁用TUN模式失败: {e}");
-                }
-                Err(_) => {
-                    logging!(
-                        warn,
-                        Type::Window,
-                        "Warning: 禁用TUN模式超时（可能系统正在关机），继续退出流程"
-                    );
-                }
-            }
-        }
-
-        #[cfg(target_os = "windows")]
-        let stop_timeout = Duration::from_secs(2);
-        #[cfg(not(target_os = "windows"))]
-        let stop_timeout = Duration::from_secs(3);
-
-        logging!(info, Type::System, "stop core");
-        match timeout(stop_timeout, CoreManager::global().stop_core()).await {
-            Ok(_) => {
-                logging!(info, Type::Window, "core已停止");
-                true
-            }
-            Err(_) => {
-                logging!(
-                    warn,
-                    Type::Window,
-                    "Warning: 停止core超时（可能系统正在关机），继续退出"
-                );
-                false
-            }
-        }
-    });
-
-    // DNS恢复（仅macOS）
-    let dns_task = tokio::task::spawn(async {
-        #[cfg(target_os = "macos")]
-        match timeout(
-            Duration::from_millis(1000),
-            crate::utils::resolve::dns::restore_public_dns(),
-        )
-        .await
-        {
-            Ok(_) => {
-                logging!(info, Type::Window, "DNS设置已恢复");
-                true
-            }
-            Err(_) => {
-                logging!(warn, Type::Window, "Warning: 恢复DNS设置超时");
-                false
-            }
-        }
-        #[cfg(not(target_os = "macos"))]
-        true
-    });
-
-    // 并行执行清理任务
-    let (proxy_result, core_result, dns_result) = tokio::join!(proxy_task, core_task, dns_task);
-
-    let proxy_success = proxy_result.unwrap_or_default();
-    let core_success = core_result.unwrap_or_default();
-    let dns_success = dns_result.unwrap_or_default();
+    // 必须串行：TUN 关闭/核心停止后再恢复 DNS，避免状态被再次覆盖。
+    let core_success = disable_tun_and_stop_core().await;
+    let proxy_success = reset_system_proxy().await;
+    let dns_success = restore_dns_with_retry().await;
 
     let all_success = proxy_success && core_success && dns_success;
 
@@ -160,6 +58,86 @@ pub async fn clean_async() -> bool {
     );
 
     all_success
+}
+
+async fn disable_tun_and_stop_core() -> bool {
+    logging!(info, Type::System, "disable tun");
+    let tun_enabled = Config::verge().await.data_arc().enable_tun_mode.unwrap_or(false);
+    let mut success = true;
+    if tun_enabled {
+        let disable_tun = serde_json::json!({ "tun": { "enable": false } });
+        match timeout(
+            Duration::from_millis(1500),
+            handle::Handle::mihomo().await.patch_base_config(&disable_tun),
+        )
+        .await
+        {
+            Ok(Ok(_)) => logging!(info, Type::Window, "TUN模式已禁用"),
+            Ok(Err(e)) => {
+                logging!(warn, Type::Window, "Warning: 禁用TUN模式失败: {e}");
+                success = false;
+            }
+            Err(_) => {
+                logging!(warn, Type::Window, "Warning: 禁用TUN模式超时");
+                success = false;
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    let stop_timeout = Duration::from_secs(2);
+    #[cfg(not(target_os = "windows"))]
+    let stop_timeout = Duration::from_secs(3);
+
+    match timeout(stop_timeout, CoreManager::global().stop_core()).await {
+        Ok(_) => success,
+        Err(_) => {
+            logging!(warn, Type::Window, "Warning: 停止core超时");
+            false
+        }
+    }
+}
+
+async fn reset_system_proxy() -> bool {
+    let sys_proxy_enabled = Config::verge().await.data_arc().enable_system_proxy.unwrap_or(false);
+    if !sys_proxy_enabled {
+        logging!(info, Type::Window, "系统代理未启用，跳过重置");
+        return true;
+    }
+    match timeout(Duration::from_millis(1500), sysopt::Sysopt::global().reset_sysproxy()).await {
+        Ok(Ok(_)) => {
+            logging!(info, Type::Window, "系统代理已重置");
+            true
+        }
+        Ok(Err(e)) => {
+            logging!(warn, Type::Window, "Warning: 重置系统代理失败: {e}");
+            false
+        }
+        Err(_) => {
+            logging!(warn, Type::Window, "Warning: 重置系统代理超时");
+            false
+        }
+    }
+}
+
+async fn restore_dns_with_retry() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        for attempt in 1..=3 {
+            if timeout(Duration::from_secs(2), crate::utils::resolve::dns::restore_public_dns())
+                .await
+                .unwrap_or(false)
+            {
+                logging!(info, Type::Window, "DNS设置已恢复（第{attempt}次尝试）");
+                return true;
+            }
+            sleep(Duration::from_millis(250)).await;
+        }
+        logging!(warn, Type::Window, "Warning: DNS恢复失败，启动时将再次尝试");
+        false
+    }
+    #[cfg(not(target_os = "macos"))]
+    true
 }
 
 #[cfg(target_os = "macos")]

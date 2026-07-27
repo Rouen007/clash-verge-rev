@@ -55,6 +55,10 @@ pub fn resolve_setup_async() {
         let config_initialized = init_verge_config_before_window().await;
         init_window().await;
         init_resources().await;
+        #[cfg(target_os = "macos")]
+        if !dns::restore_stale_dns_on_startup().await {
+            logging!(warn, Type::Setup, "启动时恢复残留 DNS 失败，继续进行 TUN 自检");
+        }
         if let Err(e) = init::init_dns_config().await {
             logging!(warn, Type::Setup, "DNS config initialization failed: {}", e);
         }
