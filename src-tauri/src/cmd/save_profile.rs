@@ -22,6 +22,14 @@ pub struct ProfileFilePatch {
     pub file_data: std::string::String,
 }
 
+struct PreparedProfilePatch {
+    patch: ProfileFilePatch,
+    path: std::path::PathBuf,
+    original_content: String,
+    is_merge: bool,
+    is_script: bool,
+}
+
 /// 保存profiles的配置
 #[tauri::command]
 pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdResult<ValidationOutcome> {
@@ -105,6 +113,31 @@ pub async fn save_profile_files(files: Vec<ProfileFilePatch>) -> CmdResult<Valid
         return Ok(ValidationOutcome::Valid);
     }
 
+    let (patches, affects_runtime) = prepare_profile_patches(files).await?;
+    if let Err(error) = write_profile_patches(&patches).await {
+        restore_profile_patches(&patches).await;
+        return Err(error);
+    }
+
+    let validation = validate_profile_patches(&patches).await?;
+    if !validation.is_valid() {
+        return Ok(validation);
+    }
+
+    let outcome = if affects_runtime {
+        apply_profile_patches(&patches).await?
+    } else {
+        ValidationOutcome::Valid
+    };
+    if !outcome.is_valid() {
+        return Ok(outcome);
+    }
+
+    backup_profile_patches(&patches);
+    Ok(ValidationOutcome::Valid)
+}
+
+async fn prepare_profile_patches(files: Vec<ProfileFilePatch>) -> CmdResult<(Vec<PreparedProfilePatch>, bool)> {
     let mut seen = HashSet::new();
     let mut patches = Vec::with_capacity(files.len());
     let mut affects_runtime = false;
@@ -131,79 +164,97 @@ pub async fn save_profile_files(files: Vec<ProfileFilePatch>) -> CmdResult<Valid
             let path = dirs::app_profiles_dir().stringify_err()?.join(rel_path.as_str());
             let runtime = profile_affects_runtime(&profiles_guard, &patch.index);
             affects_runtime |= runtime;
-            patches.push((patch, path, original_content, is_merge, is_script, runtime));
+            patches.push(PreparedProfilePatch {
+                patch,
+                path,
+                original_content,
+                is_merge,
+                is_script,
+            });
         }
     }
 
-    for (patch, path, _, _, _, _) in &patches {
-        if let Err(error) = fs::write(path, &patch.file_data).await {
-            for (_, restore_path, original, _, _, _) in &patches {
-                let _ = restore_original(restore_path, original).await;
-            }
-            return Err(error.to_string().into());
-        }
+    Ok((patches, affects_runtime))
+}
+
+async fn write_profile_patches(patches: &[PreparedProfilePatch]) -> CmdResult<()> {
+    for prepared in patches {
+        fs::write(&prepared.path, &prepared.patch.file_data)
+            .await
+            .stringify_err()?;
     }
+    Ok(())
+}
 
-    for (_, path, _, is_merge, is_script, _) in &patches {
-        let (target, file_type) = if *is_script {
-            (ValidationNoticeTarget::Script, "脚本文件")
-        } else if *is_merge {
-            (ValidationNoticeTarget::Merge, "合并配置文件")
-        } else {
-            (ValidationNoticeTarget::Runtime, "YAML配置文件")
-        };
+async fn restore_profile_patches(patches: &[PreparedProfilePatch]) {
+    for prepared in patches {
+        let _ = restore_original(&prepared.path, &prepared.original_content).await;
+    }
+}
 
-        match CoreConfigValidator::validate_config_file_outcome(&path.to_string_lossy(), Some(*is_merge)).await {
+async fn validate_profile_patches(patches: &[PreparedProfilePatch]) -> CmdResult<ValidationOutcome> {
+    for prepared in patches {
+        let (target, file_type) = validation_target(prepared);
+        match CoreConfigValidator::validate_config_file_outcome(
+            &prepared.path.to_string_lossy(),
+            Some(prepared.is_merge),
+        )
+        .await
+        {
             Ok(outcome) if outcome.is_valid() => {}
             Ok(outcome) => {
-                for (_, restore_path, original, _, _, _) in &patches {
-                    let _ = restore_original(restore_path, original).await;
-                }
+                restore_profile_patches(patches).await;
                 handle_validation_notice(&outcome, target, file_type);
                 return Ok(outcome);
             }
             Err(error) => {
-                for (_, restore_path, original, _, _, _) in &patches {
-                    let _ = restore_original(restore_path, original).await;
-                }
+                restore_profile_patches(patches).await;
                 return Err(error.to_string().into());
             }
         }
     }
+    Ok(ValidationOutcome::Valid)
+}
 
-    if affects_runtime {
-        match CoreManager::global().update_config_forced().await {
-            Ok(outcome) if outcome.is_valid() => {
-                handle::Handle::refresh_clash();
-            }
-            Ok(outcome) => {
-                for (_, restore_path, original, _, _, _) in &patches {
-                    let _ = restore_original(restore_path, original).await;
-                }
-                let _ = CoreManager::global().update_config_forced().await;
-                handle_validation_notice(&outcome, ValidationNoticeTarget::Runtime, "运行时配置");
-                return Ok(outcome);
-            }
-            Err(error) => {
-                for (_, restore_path, original, _, _, _) in &patches {
-                    let _ = restore_original(restore_path, original).await;
-                }
-                let _ = CoreManager::global().update_config_forced().await;
-                return Err(error.to_string().into());
-            }
+const fn validation_target(prepared: &PreparedProfilePatch) -> (ValidationNoticeTarget, &'static str) {
+    if prepared.is_script {
+        (ValidationNoticeTarget::Script, "脚本文件")
+    } else if prepared.is_merge {
+        (ValidationNoticeTarget::Merge, "合并配置文件")
+    } else {
+        (ValidationNoticeTarget::Runtime, "YAML配置文件")
+    }
+}
+
+async fn apply_profile_patches(patches: &[PreparedProfilePatch]) -> CmdResult<ValidationOutcome> {
+    match CoreManager::global().update_config_forced().await {
+        Ok(outcome) if outcome.is_valid() => {
+            handle::Handle::refresh_clash();
+            Ok(ValidationOutcome::Valid)
+        }
+        Ok(outcome) => {
+            restore_profile_patches(patches).await;
+            let _ = CoreManager::global().update_config_forced().await;
+            handle_validation_notice(&outcome, ValidationNoticeTarget::Runtime, "运行时配置");
+            Ok(outcome)
+        }
+        Err(error) => {
+            restore_profile_patches(patches).await;
+            let _ = CoreManager::global().update_config_forced().await;
+            Err(error.to_string().into())
         }
     }
+}
 
-    for (patch, _, _, is_merge, is_script, _) in &patches {
-        if *is_merge && patch.index == "Merge" {
+fn backup_profile_patches(patches: &[PreparedProfilePatch]) {
+    for prepared in patches {
+        if prepared.is_merge && prepared.patch.index == "Merge" {
             AutoBackupManager::trigger_backup(AutoBackupTrigger::GlobalMerge);
-        } else if *is_script && patch.index == "Script" {
+        } else if prepared.is_script && prepared.patch.index == "Script" {
             AutoBackupManager::trigger_backup(AutoBackupTrigger::GlobalScript);
         }
-        logging!(debug, Type::Config, "批量保存增强文件: {}", patch.index);
+        logging!(debug, Type::Config, "批量保存增强文件: {}", prepared.patch.index);
     }
-
-    Ok(ValidationOutcome::Valid)
 }
 
 async fn restore_original(file_path: &std::path::Path, original_content: &str) -> Result<(), String> {
