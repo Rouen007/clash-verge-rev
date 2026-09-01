@@ -7,6 +7,7 @@
     },
     "actions": {
       "toggleChain": "链式代理",
+      "splitRouting": "分流设计",
       "connect": "连接",
       "disconnect": "断开",
       "connecting": "连接中...",
@@ -88,6 +89,32 @@
         "REJECT-DROP": "丢弃请求 (REJECT-DROP)",
         "PASS": "跳过此项 (PASS)"
       }
+    }
+  },
+  "splitRouting": {
+    "title": "主订阅 / 从属订阅分流",
+    "description": "当前激活配置作为主订阅。为每个从属订阅填写网站域名后，这些域名会经过对应的从属订阅，其余流量保持主订阅不变。",
+    "primaryProfile": "当前主订阅：{{name}}",
+    "fields": {
+      "routeName": "分流名称",
+      "subscription": "从属订阅",
+      "domains": "网站域名列表",
+      "domainPlaceholder": "例如 tradingview.com",
+      "domainHint": "每行一个域名，支持 tradingview.com 这类主域名；不填协议和路径。",
+      "file": "引用本地配置：{{file}}"
+    },
+    "actions": {
+      "add": "添加从属分流",
+      "delete": "删除"
+    },
+    "persistenceHint": "保存后会写入当前配置的增强文件并重新加载核心。订阅更新不会覆盖这些分流规则。",
+    "feedback": {
+      "invalid": "请检查名称、从属订阅和域名；名称不能重复，域名必须是有效的主机名。",
+      "missingEnhancements": "当前配置缺少增强文件，无法保存分流设计。",
+      "noCurrentProfile": "请先激活一个主订阅配置。",
+      "noSubordinateProfiles": "请先在“配置”页面导入至少一个从属订阅。",
+      "missingSubscription": "从属订阅已不存在，请重新选择。",
+      "saved": "分流设计已保存并生效。"
     }
   }
 }

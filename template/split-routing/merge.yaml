@@ -1,0 +1,13 @@
+# 仅示例。请将 <profile-file> 替换为 Clash 已保存的从属 profile 文件名。
+proxy-providers:
+  "SplitRoute | Provider | Example":
+    type: file
+    path: "./profiles/<profile-file>.yaml"
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 5000
+      lazy: true
+    override:
+      additional-prefix: "SplitRoute | Provider | Example | "

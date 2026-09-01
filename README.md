@@ -85,7 +85,16 @@ Supports Windows (x64/x86), Linux (x64/arm64) and macOS 11+ (intel/apple).
 - 配置文件管理和增强（Merge 和 Script），配置文件语法提示。
 - 系统代理和守卫、`TUN(虚拟网卡)` 模式。
 - 可视化节点和规则编辑
+- 主订阅 / 从属订阅分流设计：在代理页为一个或多个从属配置指定网站域名，自动生成代理提供者、代理组和优先规则；未命中的流量继续走主订阅。
 - WebDav 配置备份和同步
+
+### 主订阅 / 从属订阅分流
+
+在「代理」页点击「分流设计」即可配置通用的按网站分流：当前激活的配置始终是主订阅；其他已导入的远程或本地配置可以作为从属订阅。每条分流填写一个名称、一个从属配置和网站域名列表（每行一个域名），保存后 Clash Verge Rev 会把配置写入当前 profile 的增强文件并重新加载核心。
+
+分流只生成 `DOMAIN-SUFFIX` 规则，规则会被放在通用规则之前。每个从属订阅会生成独立的文件 provider、自动测速组和可手动选择的 selector 组，名称带有 `SplitRoute |` 前缀，方便在「代理」页快速切换。没有匹配到分流域名的连接保持当前主订阅和原有规则不变。
+
+高级用户可以参考 [`template/split-routing/`](./template/split-routing/) 中的 merge、groups 和 rules 模板。订阅 URL 不会被复制到增强文件；provider 只引用 Clash 已保存的本地 profile 文件。
 
 ### FAQ
 

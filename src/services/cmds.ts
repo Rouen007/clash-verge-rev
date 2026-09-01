@@ -49,6 +49,17 @@ export async function saveProfileFile(index: string, fileData: string) {
   )
 }
 
+export async function saveProfileFiles(
+  files: Array<{ index: string; fileData: string }>,
+) {
+  return invoke<ValidationOutcome>('save_profile_files', {
+    files: files.map(({ index, fileData }) => ({
+      index,
+      file_data: fileData,
+    })),
+  })
+}
+
 export async function importProfile(url: string, option?: IProfileOption) {
   return invoke<void>('import_profile', {
     url,

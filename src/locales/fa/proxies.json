@@ -7,6 +7,7 @@
     },
     "actions": {
       "toggleChain": "پراکسی زنجیره‌ای",
+      "splitRouting": "Split Routing",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
@@ -88,6 +89,32 @@
         "REJECT-DROP": "درخواست‌ها را نادیده می‌گیرد",
         "PASS": "این قانون را در صورت تطابق نادیده می‌گیرد"
       }
+    }
+  },
+  "splitRouting": {
+    "title": "Primary / subordinate split routing",
+    "description": "The active profile remains the primary subscription. Assign domains to one or more subordinate profiles; all other traffic keeps using the primary route.",
+    "primaryProfile": "Current primary profile: {{name}}",
+    "fields": {
+      "routeName": "Route name",
+      "subscription": "Subordinate subscription",
+      "domains": "Website domains",
+      "domainPlaceholder": "For example, tradingview.com",
+      "domainHint": "One domain per line. Use hostnames such as tradingview.com without a scheme or path.",
+      "file": "Local config: {{file}}"
+    },
+    "actions": {
+      "add": "Add subordinate route",
+      "delete": "Delete"
+    },
+    "persistenceHint": "Saving writes the profile enhancement files and reloads the core. Subscription updates will not overwrite these routes.",
+    "feedback": {
+      "invalid": "Check the route name, subordinate profile, and domains. Names must be unique and domains must be valid hostnames.",
+      "missingEnhancements": "The active profile is missing enhancement files, so split routing cannot be saved.",
+      "noCurrentProfile": "Activate a primary profile first.",
+      "noSubordinateProfiles": "Import at least one subordinate profile from the Profiles page first.",
+      "missingSubscription": "The subordinate profile no longer exists. Select another one.",
+      "saved": "Split routing saved and activated."
     }
   }
 }

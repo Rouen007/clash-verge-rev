@@ -1,4 +1,9 @@
-import { LanOutlined, LanRounded, WarningRounded } from '@mui/icons-material'
+import {
+  LanOutlined,
+  LanRounded,
+  RouteRounded,
+  WarningRounded,
+} from '@mui/icons-material'
 import { Box, Button, ButtonGroup } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { useCallback, useEffect, useReducer, useState } from 'react'
@@ -8,6 +13,7 @@ import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 import { BasePage, TooltipIcon } from '@/components/base'
 import { ProviderButton } from '@/components/proxy/provider-button'
 import { ProxyGroups } from '@/components/proxy/proxy-groups'
+import { SplitRoutingDialog } from '@/components/proxy/split-routing-dialog'
 import { useVerge } from '@/hooks/use-verge'
 import {
   useAppRefreshers,
@@ -39,6 +45,7 @@ const ProxyPage = () => {
       return false
     }
   })
+  const [splitRoutingOpen, setSplitRoutingOpen] = useState(false)
 
   const [chainConfigData, dispatchChainConfigData] = useReducer(
     (_: string | null, action: string | null) => action,
@@ -191,6 +198,15 @@ const ProxyPage = () => {
           >
             {t('proxies.page.actions.toggleChain')}
           </Button>
+
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setSplitRoutingOpen(true)}
+            startIcon={<RouteRounded fontSize="small" />}
+          >
+            {t('proxies.page.actions.splitRouting')}
+          </Button>
         </Box>
       }
     >
@@ -198,6 +214,10 @@ const ProxyPage = () => {
         mode={curMode ?? 'rule'}
         isChainMode={isChainMode}
         chainConfigData={chainConfigData}
+      />
+      <SplitRoutingDialog
+        open={splitRoutingOpen}
+        onClose={() => setSplitRoutingOpen(false)}
       />
     </BasePage>
   )

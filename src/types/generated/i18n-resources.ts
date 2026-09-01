@@ -426,6 +426,7 @@ export interface TranslationResources {
           connect: string
           connecting: string
           disconnect: string
+          splitRouting: string
           toggleChain: string
         }
         chain: {
@@ -482,6 +483,32 @@ export interface TranslationResources {
           sortDelay: string
           sortName: string
         }
+      }
+      splitRouting: {
+        actions: {
+          add: string
+          delete: string
+        }
+        description: string
+        feedback: {
+          invalid: string
+          missingEnhancements: string
+          missingSubscription: string
+          noCurrentProfile: string
+          noSubordinateProfiles: string
+          saved: string
+        }
+        fields: {
+          domainHint: string
+          domainPlaceholder: string
+          domains: string
+          file: string
+          routeName: string
+          subscription: string
+        }
+        persistenceHint: string
+        primaryProfile: string
+        title: string
       }
     }
     rules: {

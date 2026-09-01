@@ -1,0 +1,17 @@
+prepend:
+  - name: "SplitRoute | Example"
+    type: select
+    proxies:
+      - "SplitRoute | Example | Auto"
+    use:
+      - "SplitRoute | Provider | Example"
+  - name: "SplitRoute | Example | Auto"
+    type: url-test
+    use:
+      - "SplitRoute | Provider | Example"
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 80
+    lazy: false
+append: []
+delete: []
