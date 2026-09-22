@@ -10,6 +10,8 @@ interface EnhancedCardProps {
   iconColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'
   minHeight?: number | string
   noContentPadding?: boolean
+  backgroundImage?: string
+  glass?: boolean
 }
 
 // 自定义卡片组件
@@ -23,6 +25,8 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
       iconColor = 'primary',
       minHeight,
       noContentPadding = false,
+      backgroundImage,
+      glass = false,
     },
     ref,
   ) => {
@@ -47,6 +51,27 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
           flexDirection: 'column',
           borderRadius: 2,
           backgroundColor: isDark ? '#282a36' : '#ffffff',
+          ...(glass && {
+            backgroundColor: isDark
+              ? 'rgba(24, 28, 42, 0.3)'
+              : 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px) saturate(120%)',
+            border: isDark
+              ? '1px solid rgba(184, 201, 255, 0.14)'
+              : '1px solid rgba(255, 255, 255, 0.68)',
+            boxShadow: isDark
+              ? '0 18px 42px rgba(5, 8, 24, 0.24)'
+              : '0 18px 42px rgba(74, 92, 144, 0.14)',
+          }),
+          ...(backgroundImage && {
+            backgroundImage: `${
+              isDark
+                ? 'linear-gradient(90deg, rgba(17, 20, 34, 0.84) 0%, rgba(24, 28, 46, 0.54) 54%, rgba(30, 35, 57, 0.2) 100%)'
+                : 'linear-gradient(90deg, rgba(250, 252, 255, 0.76) 0%, rgba(246, 249, 255, 0.44) 55%, rgba(241, 245, 255, 0.12) 100%)'
+            }, url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'right center',
+          }),
         }}
         ref={ref}
       >
@@ -59,6 +84,12 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
             justifyContent: 'space-between',
             borderBottom: 1,
             borderColor: 'divider',
+            ...(backgroundImage && {
+              backgroundColor: isDark
+                ? 'rgba(17, 20, 34, 0.35)'
+                : 'rgba(255, 255, 255, 0.28)',
+              backdropFilter: 'blur(10px)',
+            }),
           }}
         >
           <Box

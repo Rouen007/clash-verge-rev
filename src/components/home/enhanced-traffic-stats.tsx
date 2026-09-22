@@ -7,6 +7,7 @@ import {
   MemoryRounded,
 } from '@mui/icons-material'
 import {
+  Box,
   Grid,
   PaletteColor,
   Paper,
@@ -18,7 +19,10 @@ import { ReactNode, memo, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TrafficErrorBoundary } from '@/components/shared/traffic-error-boundary'
-import { useConnectionSummaryData } from '@/hooks/use-connection-data'
+import {
+  useConnectionSummaryData,
+  useDomainTrafficUsage24h,
+} from '@/hooks/use-connection-data'
 import { useMemoryData } from '@/hooks/use-memory-data'
 import { useTrafficData } from '@/hooks/use-traffic-data'
 import { useVerge } from '@/hooks/use-verge'
@@ -153,6 +157,7 @@ export const EnhancedTrafficStats = () => {
     response: { data: traffic },
   } = useTrafficData({ enabled: pageVisible })
 
+
   const {
     response: { data: memory },
   } = useMemoryData({ enabled: displayMemory && pageVisible })
@@ -160,6 +165,9 @@ export const EnhancedTrafficStats = () => {
   const {
     response: { data: connectionSummary },
   } = useConnectionSummaryData({ enabled: pageVisible })
+  const { data: domainTraffic } = useDomainTrafficUsage24h({
+    enabled: pageVisible,
+  })
 
   // Canvas组件现在直接从全局Hook获取数据，无需手动添加数据点
 
@@ -264,6 +272,22 @@ export const EnhancedTrafficStats = () => {
     return cards
   }, [t, parsedData, displayMemory])
 
+  const topDomainTraffic = useMemo(
+    () =>
+      domainTraffic.slice(0, 5).map((item) => {
+        const [upload, uploadUnit] = parseTraffic(item.upload)
+        const [download, downloadUnit] = parseTraffic(item.download)
+        return {
+          ...item,
+          upload,
+          uploadUnit,
+          download,
+          downloadUnit,
+        }
+      }),
+    [domainTraffic],
+  )
+
   return (
     <TrafficErrorBoundary
       onError={(error, errorInfo) => {
@@ -283,6 +307,53 @@ export const EnhancedTrafficStats = () => {
             <CompactStatCard {...card} />
           </Grid>
         ))}
+        <Grid size={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+              borderRadius: 2,
+              p: 1.5,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              过去 24 小时域名流量排行
+            </Typography>
+            {topDomainTraffic.length === 0 ? (
+              <Typography variant="caption" color="text.secondary">
+                暂无足够的连接流量数据
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'grid', gap: 0.75 }}>
+                <Grid
+                  container
+                  sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
+                >
+                  <Grid size={6}>域名</Grid>
+                  <Grid size={3} sx={{ textAlign: 'right' }}>
+                    上传
+                  </Grid>
+                  <Grid size={3} sx={{ textAlign: 'right' }}>
+                    下载
+                  </Grid>
+                </Grid>
+                {topDomainTraffic.map((item) => (
+                  <Grid container key={item.domain} sx={{ fontSize: '0.8rem' }}>
+                    <Grid size={6} sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.domain}
+                    </Grid>
+                    <Grid size={3} sx={{ textAlign: 'right' }}>
+                      {item.upload} {item.uploadUnit}
+                    </Grid>
+                    <Grid size={3} sx={{ textAlign: 'right' }}>
+                      {item.download} {item.downloadUnit}
+                    </Grid>
+                  </Grid>
+                ))}
+              </Box>
+            )}
+          </Paper>
+        </Grid>
       </Grid>
     </TrafficErrorBoundary>
   )

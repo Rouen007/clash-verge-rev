@@ -25,6 +25,7 @@ import { useLockFn } from 'ahooks'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import homeBackground from '@/assets/image/auto-failover-lightning.png'
 import { BasePage } from '@/components/base'
 import { ClashModeCard } from '@/components/home/clash-mode-card'
 import { CurrentProxyCard } from '@/components/home/current-proxy-card'
@@ -326,6 +327,7 @@ const HomePage = () => {
           title={t('home.page.cards.trafficStats')}
           icon={<SpeedOutlined />}
           iconColor="secondary"
+          glass
         >
           <EnhancedTrafficStats />
         </EnhancedCard>,
@@ -365,7 +367,14 @@ const HomePage = () => {
   return (
     <BasePage
       title={t('home.page.title')}
-      contentStyle={{ padding: 2 }}
+      contentStyle={{
+        padding: 2,
+        minHeight: '100%',
+        backgroundColor: '#edf3ff',
+        backgroundImage: `linear-gradient(90deg, rgba(247, 250, 255, 0.08), rgba(245, 248, 255, 0.01)), url(${homeBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: '70% center',
+      }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Tooltip title={t('home.page.tooltips.lightweightMode')} arrow>
@@ -417,6 +426,7 @@ const NetworkSettingsCard = () => {
       icon={<DnsOutlined />}
       iconColor="primary"
       action={null}
+      glass
     >
       <ProxyTunCard />
     </EnhancedCard>
@@ -432,6 +442,7 @@ const ClashModeEnhancedCard = () => {
       icon={<RouterOutlined />}
       iconColor="info"
       action={null}
+      glass
     >
       <ClashModeCard />
     </EnhancedCard>

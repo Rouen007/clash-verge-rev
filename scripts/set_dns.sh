@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # 验证IPv4地址格式
 function is_valid_ipv4() {
@@ -45,6 +46,11 @@ hardware_port=$(networksetup -listnetworkserviceorder | awk -v dev="$nic" '
     /\(Hardware Port:/{interface=$NF;sub(/\)/, "", interface); if (interface == dev) {print port; exit}}
 ')
 
+if [ -z "$hardware_port" ]; then
+    echo "failed to resolve network service for interface $nic" >&2
+    exit 1
+fi
+
 # 获取当前DNS设置
 original_dns=$(networksetup -getdnsservers "$hardware_port")
 
@@ -57,6 +63,12 @@ for ip in $original_dns; do
         break
     fi
 done
+
+# TUN 配置会在每次配置重载时重新生成。DNS 已经是目标值且已有备份时，
+# 直接返回，避免把用户原始 DNS 覆盖成 Clash DNS。
+if [ -f .original_dns.txt ] && [ "$original_dns" = "$1" ]; then
+    exit 0
+fi
 
 # 更新DNS设置
 if [ "$is_valid_dns" = false ]; then

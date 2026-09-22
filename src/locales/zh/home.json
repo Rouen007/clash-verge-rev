@@ -96,6 +96,10 @@
         "group": "代理组",
         "proxy": "节点",
         "noActiveNode": "暂无激活的代理节点"
+      },
+      "autoFailover": {
+        "title": "断网自动切换",
+        "description": "连续异常后按 日 → 新 → 台 → 美 寻找可用节点"
       }
     },
     "tests": {

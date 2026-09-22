@@ -96,6 +96,10 @@
         "group": "Group",
         "proxy": "Proxy",
         "noActiveNode": "No active proxy node"
+      },
+      "autoFailover": {
+        "title": "Auto Failover",
+        "description": "After repeated failures, tries Japan, Singapore, Taiwan, then the US"
       }
     },
     "tests": {

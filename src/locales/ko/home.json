@@ -96,6 +96,10 @@
         "group": "그룹",
         "proxy": "프록시",
         "noActiveNode": "활성 프록시 노드 없음"
+      },
+      "autoFailover": {
+        "title": "Auto Failover",
+        "description": "After repeated failures, tries Japan, Singapore, Taiwan, then the US"
       }
     },
     "tests": {

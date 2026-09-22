@@ -14,7 +14,7 @@ use crate::{
         tray::Tray,
     },
     feat,
-    module::{auto_backup::AutoBackupManager, lightweight::auto_lightweight_boot},
+    module::{auto_backup::AutoBackupManager, auto_failover, lightweight::auto_lightweight_boot},
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
 };
@@ -55,6 +55,10 @@ pub fn resolve_setup_async() {
         let config_initialized = init_verge_config_before_window().await;
         init_window().await;
         init_resources().await;
+        #[cfg(target_os = "macos")]
+        if !dns::restore_stale_dns_on_startup().await {
+            logging!(warn, Type::Setup, "启动时恢复残留 DNS 失败，继续进行 TUN 自检");
+        }
         if let Err(e) = init::init_dns_config().await {
             logging!(warn, Type::Setup, "DNS config initialization failed: {}", e);
         }
@@ -77,6 +81,7 @@ pub fn resolve_setup_async() {
             init_hotkey(),
             init_auto_lightweight_boot(),
             init_auto_backup(),
+            init_auto_failover(),
             init_silent_updater(),
         );
 
@@ -138,6 +143,10 @@ pub(super) async fn init_auto_backup() {
     logging_error!(Type::Setup, AutoBackupManager::global().init().await);
 }
 
+pub(super) async fn init_auto_failover() {
+    auto_failover::init().await;
+}
+
 async fn init_silent_updater() {
     use crate::core::SilentUpdater;
     use crate::core::handle::Handle;
@@ -196,7 +205,15 @@ pub(super) async fn init_service_manager() {
 }
 
 pub(super) async fn init_core_manager() {
-    logging_error!(Type::Setup, CoreManager::global().init().await);
+    if let Err(e) = CoreManager::global().init().await {
+        logging!(error, Type::Setup, "Core startup failed: {e}");
+        return;
+    }
+
+    #[cfg(target_os = "macos")]
+    if let Err(e) = crate::utils::startup_guard::verify_tun_ready().await {
+        logging!(error, Type::Setup, "TUN startup verification failed: {e}");
+    }
 }
 
 pub(super) async fn init_system_proxy() {
