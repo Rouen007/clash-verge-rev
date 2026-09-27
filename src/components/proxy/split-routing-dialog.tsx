@@ -21,7 +21,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

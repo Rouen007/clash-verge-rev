@@ -54,18 +54,17 @@ const ProxyPage = () => {
 
   const { clashConfig } = useClashConfigData()
   const { refreshClashConfig } = useAppRefreshers()
+  const { verge } = useVerge()
 
   const updateChainConfigData = useCallback((value: string | null) => {
     dispatchChainConfigData(value)
   }, [])
-  const { verge } = useVerge()
 
   const normalizedMode = clashConfig?.mode?.toLowerCase()
   const curMode = isMode(normalizedMode) ? normalizedMode : undefined
   const chainWarning = t('proxies.page.chain.warning')
 
   const onChangeMode = useLockFn(async (mode: Mode) => {
-    // 断开连接
     if (mode !== curMode && verge?.auto_close_connection) {
       closeAllConnections()
     }
