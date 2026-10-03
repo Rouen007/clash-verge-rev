@@ -95,6 +95,13 @@ Supports Windows (x64/x86), Linux (x64/arm64) and macOS 11+ (intel/apple).
 
 高级用户可以参考 [`template/split-routing/`](./template/split-routing/) 中的 merge、groups 和 rules 模板。订阅 URL 不会被复制到增强文件；provider 只引用 Clash 已保存的本地 profile 文件。
 
+### 定制版升级与构建策略 (Custom Upgrade Strategy)
+
+本 fork 维护了 GUI 分流设计与 macOS 自定义图标。当上游官方发布新版本（Release Tag）时，详细的拉取合并、环境修复、构建与替换流程请参阅：
+- [定制版升级策略文档](./docs/UPGRADE_CUSTOM_BUILD.md)
+- [Agent 升级工作流技能](./.github/skills/clash-verge-upgrade/SKILL.md)
+- 版本检查脚本：`./scripts/check_clash_update.sh`
+
 ### FAQ
 
 Refer to [Doc FAQ Page](https://clash-verge-rev.github.io/faq/windows.html)
