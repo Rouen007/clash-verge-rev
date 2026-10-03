@@ -60,6 +60,11 @@ git merge --no-commit --no-ff <TARGET_TAG>
    - `src/pages/proxies.tsx` 中仍引用并渲染 `<SplitRoutingDialog />`；
    - `src/services/cmds.ts` 中包含 `saveSplitRoutingConfig`；
    - `src-tauri/src/cmd/save_profile.rs` 与 `src-tauri/src/lib.rs` 中注册了 `save_split_routing_config` 命令。
+3. **DNS 覆写默认开启**：
+   - `src-tauri/src/config/verge.rs` 中 `enable_dns_settings: Some(true)`；
+   - `src-tauri/src/config/dns.rs` 中 `self.enable_dns_settings.unwrap_or(true)`；
+   - `src-tauri/src/enhance/mod.rs` 与 `src-tauri/src/feat/dns.rs` 中开启 `enable_dns_settings` 时自动确认 `dns_source`，防止订阅自带 DNS 更新时被自动关闭覆写；
+   - `src/components/setting/setting-clash.tsx` 与 `src/components/setting/mods/dns-viewer.tsx` 默认回退 `true`。
 
 确认无误后提交合并：
 ```bash

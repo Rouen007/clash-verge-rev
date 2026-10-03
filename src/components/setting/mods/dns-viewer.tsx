@@ -192,7 +192,7 @@ export function DnsViewer({ ref }: { ref?: Ref<DialogRef> }) {
   const dnsEnabled = currentProfile
     ? (verge?.profile_dns_settings?.[currentProfile.uid]?.enabled ??
       verge?.enable_dns_settings ??
-      false)
+      true)
     : false
   const themeMode = useThemeMode()
 

@@ -34,6 +34,15 @@
   ]
   ```
 
+### 3. DNS 覆写默认开启 (Default DNS Override Enabled)
+- **后端默认配置与自动确认**：
+  - `src-tauri/src/config/verge.rs`：`IVerge::template()` 中 `enable_dns_settings: Some(true)`
+  - `src-tauri/src/config/dns.rs`：`dns_settings_for` 中未保存配置的订阅默认 `self.enable_dns_settings.unwrap_or(true)`
+  - `src-tauri/src/enhance/mod.rs`：当 `enable_dns_settings` 开启时，自动信任当前订阅的 `dns_source`（免除机场更新 DNS 时自动关闭 DNS 覆写）
+  - `src-tauri/src/feat/dns.rs`：手动开启 DNS 覆写时自动写入 `confirmation`
+- **前端回退默认值**：
+  - `src/components/setting/setting-clash.tsx` 与 `src/components/setting/mods/dns-viewer.tsx` 中 `verge?.enable_dns_settings ?? true`
+
 ---
 
 ## 二、 标准升级步骤

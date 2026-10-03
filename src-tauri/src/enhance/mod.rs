@@ -896,9 +896,15 @@ pub async fn enhance(
     } = cfg_vals;
 
     let profile = collect_profile_items(profiles).await?;
+    let dns_source = dns_override_source(profile_uid, &profile.config)?;
+    let dns_override_confirmation = if enable_dns_settings {
+        dns_source.clone().or(dns_override_confirmation)
+    } else {
+        dns_override_confirmation
+    };
     let dns_override = DnsOverrideState::new(
         profile_uid,
-        dns_override_source(profile_uid, &profile.config)?,
+        dns_source,
         enable_dns_settings,
         dns_override_confirmation,
     );

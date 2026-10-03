@@ -41,7 +41,7 @@ const SettingClash = ({ onError }: Props) => {
   const dnsEnabled = currentProfile
     ? (verge?.profile_dns_settings?.[currentProfile.uid]?.enabled ??
       verge?.enable_dns_settings ??
-      false)
+      true)
     : false
   const displayedMixedPort = useDisplayedMixedPort()
   const [, setClashLog] = useClashLog()

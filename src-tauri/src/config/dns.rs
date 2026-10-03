@@ -118,7 +118,7 @@ impl IVerge {
             .get(profile_uid)
             .cloned()
             .unwrap_or(ProfileDnsSettings {
-                enabled: self.enable_dns_settings.unwrap_or(false),
+                enabled: self.enable_dns_settings.unwrap_or(true),
                 confirmation: None,
             })
     }
