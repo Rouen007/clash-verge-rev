@@ -1,7 +1,22 @@
-#!name=国内视频与POPO直连-Futu走PROXY
-#!desc=仅添加分流规则，不替换现有Config或节点。国内视频与网易POPO直连；Futu相关域名走Shadowrocket当前PROXY策略。
+#!name=手机分流-默认PROXY
+#!desc=国内视频、网易POPO及中国IP直连；Futu与其余未匹配流量走当前PROXY策略。不包含节点或订阅凭据。
 
 [Rule]
+# sub.conf 基础直连规则：本地/私有地址与邮件端口直连
+GEOIP,PRIVATE,DIRECT,no-resolve
+DST-PORT,25,DIRECT
+DST-PORT,110,DIRECT
+DST-PORT,143,DIRECT
+DST-PORT,465,DIRECT
+DST-PORT,587,DIRECT
+DST-PORT,993,DIRECT
+DST-PORT,995,DIRECT
+
+# 网络连通性检测域名：走当前 PROXY
+DOMAIN-SUFFIX,browserleaks.com,PROXY
+DOMAIN-SUFFIX,ipleak.net,PROXY
+DOMAIN-SUFFIX,dnsleaktest.com,PROXY
+
 # Futu / 富途：走 Shadowrocket 当前选择的 PROXY 策略，不绑定特定节点
 DOMAIN-SUFFIX,futunn.com,PROXY
 DOMAIN-SUFFIX,futu5.com,PROXY
@@ -19,6 +34,10 @@ DOMAIN-SUFFIX,biliapi.net,DIRECT
 DOMAIN-SUFFIX,bilivideo.com,DIRECT
 DOMAIN-SUFFIX,bilivideo.cn,DIRECT
 DOMAIN-SUFFIX,hdslb.com,DIRECT
+DOMAIN-SUFFIX,douyu.com,DIRECT
+DOMAIN-SUFFIX,douyucdn.cn,DIRECT
+DOMAIN-SUFFIX,gov.cn,DIRECT
+DOMAIN-SUFFIX,gov,DIRECT
 
 DOMAIN-SUFFIX,iqiyi.com,DIRECT
 DOMAIN-SUFFIX,qiyi.com,DIRECT
@@ -44,3 +63,7 @@ DOMAIN-SUFFIX,mgtv.com,DIRECT
 DOMAIN-SUFFIX,hitv.com,DIRECT
 DOMAIN-SUFFIX,cctv.com,DIRECT
 DOMAIN-SUFFIX,cntv.cn,DIRECT
+
+# 中国 IP 直连；未命中其他规则的流量默认走当前 PROXY
+GEOIP,CN,DIRECT
+FINAL,PROXY
