@@ -1,0 +1,46 @@
+#!name=国内视频与POPO直连-Futu走AWS
+#!desc=仅添加分流规则，不替换现有Config或节点。国内视频与网易POPO直连；Futu相关域名走AWS-Singapore-SS443。
+
+[Rule]
+# Futu / 富途：走本机已添加的 AWS 新加坡节点
+DOMAIN-SUFFIX,futunn.com,AWS-Singapore-SS443
+DOMAIN-SUFFIX,futu5.com,AWS-Singapore-SS443
+DOMAIN-SUFFIX,futuhk.com,AWS-Singapore-SS443
+DOMAIN-SUFFIX,futuholdings.com,AWS-Singapore-SS443
+DOMAIN-SUFFIX,futu.com,AWS-Singapore-SS443
+
+# 网易 POPO：网易域名直连；未涵盖的 App 后端可按 Shadowrocket 日志补齐
+DOMAIN-SUFFIX,netease.com,DIRECT
+DOMAIN-SUFFIX,netease.im,DIRECT
+
+# 国内视频网站：按常见官方服务域名直连
+DOMAIN-SUFFIX,bilibili.com,DIRECT
+DOMAIN-SUFFIX,biliapi.net,DIRECT
+DOMAIN-SUFFIX,bilivideo.com,DIRECT
+DOMAIN-SUFFIX,bilivideo.cn,DIRECT
+DOMAIN-SUFFIX,hdslb.com,DIRECT
+
+DOMAIN-SUFFIX,iqiyi.com,DIRECT
+DOMAIN-SUFFIX,qiyi.com,DIRECT
+DOMAIN-SUFFIX,iqiyipic.com,DIRECT
+DOMAIN-SUFFIX,qiyipic.com,DIRECT
+DOMAIN-SUFFIX,pps.tv,DIRECT
+DOMAIN-SUFFIX,ppsimg.com,DIRECT
+DOMAIN-SUFFIX,71.am,DIRECT
+DOMAIN-SUFFIX,71edge.com,DIRECT
+DOMAIN-SUFFIX,71edge.net,DIRECT
+
+DOMAIN-SUFFIX,v.qq.com,DIRECT
+DOMAIN-SUFFIX,video.qq.com,DIRECT
+DOMAIN-SUFFIX,qqvideo.gtimg.com,DIRECT
+DOMAIN-SUFFIX,v.smtcdns.com,DIRECT
+
+DOMAIN-SUFFIX,youku.com,DIRECT
+DOMAIN-SUFFIX,ykimg.com,DIRECT
+DOMAIN-SUFFIX,tudou.com,DIRECT
+DOMAIN-SUFFIX,soku.com,DIRECT
+
+DOMAIN-SUFFIX,mgtv.com,DIRECT
+DOMAIN-SUFFIX,hitv.com,DIRECT
+DOMAIN-SUFFIX,cctv.com,DIRECT
+DOMAIN-SUFFIX,cntv.cn,DIRECT
