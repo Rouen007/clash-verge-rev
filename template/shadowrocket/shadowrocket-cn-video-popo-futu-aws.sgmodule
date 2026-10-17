@@ -1,5 +1,5 @@
 #!name=手机分流-默认PROXY
-#!desc=国内视频、网易POPO及中国IP直连；Futu与其余未匹配流量走当前PROXY策略。不包含节点或订阅凭据。
+#!desc=国内视频/常用国内服务、网易POPO及Apple常规服务直连；Google/OpenAI/Claude/GitHub/Telegram/LINE、Apple Push/Relay、Copilot与Futu走当前PROXY；其余未匹配流量默认PROXY。不包含节点或订阅凭据。
 
 [Rule]
 # sub.conf 基础直连规则：本地/私有地址与邮件端口直连
@@ -17,12 +17,91 @@ DOMAIN-SUFFIX,browserleaks.com,PROXY
 DOMAIN-SUFFIX,ipleak.net,PROXY
 DOMAIN-SUFFIX,dnsleaktest.com,PROXY
 
+# 常用海外服务：显式优先于 GEOIP,CN，沿用 YToo 的代理意图
+DOMAIN-KEYWORD,google,PROXY
+DOMAIN-SUFFIX,google.com,PROXY
+DOMAIN-SUFFIX,googleapis.com,PROXY
+DOMAIN-SUFFIX,googleusercontent.com,PROXY
+DOMAIN-SUFFIX,gstatic.com,PROXY
+DOMAIN-SUFFIX,gmail.com,PROXY
+DOMAIN-SUFFIX,youtu.be,PROXY
+DOMAIN-SUFFIX,ytimg.com,PROXY
+
+DOMAIN-SUFFIX,openai.com,PROXY
+DOMAIN-SUFFIX,chatgpt.com,PROXY
+DOMAIN-SUFFIX,oaistatic.com,PROXY
+DOMAIN-SUFFIX,oaiusercontent.com,PROXY
+DOMAIN-SUFFIX,chatgpt.livekit.cloud,PROXY
+DOMAIN-SUFFIX,anthropic.com,PROXY
+DOMAIN-SUFFIX,claude.ai,PROXY
+
+DOMAIN-SUFFIX,github.com,PROXY
+DOMAIN-SUFFIX,github.io,PROXY
+DOMAIN-SUFFIX,githubusercontent.com,PROXY
+
+DOMAIN-SUFFIX,t.me,PROXY
+DOMAIN-SUFFIX,tdesktop.com,PROXY
+DOMAIN-SUFFIX,telegra.ph,PROXY
+DOMAIN-SUFFIX,telegram.me,PROXY
+DOMAIN-SUFFIX,telegram.org,PROXY
+DOMAIN-SUFFIX,telesco.pe,PROXY
+DOMAIN-SUFFIX,line.naver.jp,PROXY
+DOMAIN-SUFFIX,line.me,PROXY
+DOMAIN-SUFFIX,line-apps.com,PROXY
+DOMAIN-SUFFIX,line-cdn.net,PROXY
+DOMAIN-SUFFIX,line-scdn.net,PROXY
+
+# Apple Push / Private Relay 与 Copilot：保留 YToo 的显式代理例外
+DOMAIN-SUFFIX,push.apple.com,PROXY
+DOMAIN-SUFFIX,push-apple.com.akadns.net,PROXY
+DOMAIN-SUFFIX,apple-relay.akamaized.net,PROXY
+DOMAIN-SUFFIX,apple-relay.apple.com,PROXY
+DOMAIN-SUFFIX,apple-relay.cloudflare.com,PROXY
+DOMAIN-SUFFIX,apple-relay.fastly-edge.com,PROXY
+DOMAIN-SUFFIX,apple-relay.mask.apple-dns.net,PROXY
+DOMAIN,copilot.microsoft.com,PROXY
+DOMAIN,copilot.bing.com,PROXY
+
 # Futu / 富途：走 Shadowrocket 当前选择的 PROXY 策略，不绑定特定节点
 DOMAIN-SUFFIX,futunn.com,PROXY
 DOMAIN-SUFFIX,futu5.com,PROXY
 DOMAIN-SUFFIX,futuhk.com,PROXY
 DOMAIN-SUFFIX,futuholdings.com,PROXY
 DOMAIN-SUFFIX,futu.com,PROXY
+
+# 常用国内服务：取自 YToo 的直连例外
+DOMAIN-SUFFIX,baidu.com,DIRECT
+DOMAIN-SUFFIX,baidubcr.com,DIRECT
+DOMAIN-SUFFIX,bdstatic.com,DIRECT
+DOMAIN-SUFFIX,yunjiasu-cdn.net,DIRECT
+DOMAIN-SUFFIX,taobao.com,DIRECT
+DOMAIN-SUFFIX,alicdn.com,DIRECT
+DOMAIN-SUFFIX,alibaba.com,DIRECT
+DOMAIN-SUFFIX,alikunlun.com,DIRECT
+DOMAIN-SUFFIX,alipay.com,DIRECT
+DOMAIN-SUFFIX,qq.com,DIRECT
+DOMAIN-SUFFIX,wechat.com,DIRECT
+DOMAIN-SUFFIX,servicewechat.com,DIRECT
+DOMAIN-SUFFIX,gtimg.com,DIRECT
+DOMAIN-SUFFIX,tencent.com,DIRECT
+DOMAIN-SUFFIX,tencent-cloud.net,DIRECT
+DOMAIN-SUFFIX,tenpay.com,DIRECT
+
+# Apple 常规服务直连；上面的 Push / Relay 例外仍优先走 PROXY
+DOMAIN,www-cdn.icloud.com.akadns.net,DIRECT
+DOMAIN-SUFFIX,aaplimg.com,DIRECT
+DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT
+DOMAIN-SUFFIX,apple.co,DIRECT
+DOMAIN-SUFFIX,apple.com,DIRECT
+DOMAIN-SUFFIX,apple.news,DIRECT
+DOMAIN-SUFFIX,apple.com.cn,DIRECT
+DOMAIN-SUFFIX,appstore.com,DIRECT
+DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+DOMAIN-SUFFIX,icloud-content.com,DIRECT
+DOMAIN-SUFFIX,icloud.com,DIRECT
+DOMAIN-SUFFIX,icloud.com.cn,DIRECT
+DOMAIN-SUFFIX,me.com,DIRECT
+DOMAIN-SUFFIX,mzstatic.com,DIRECT
 
 # 网易 POPO：网易域名直连；未涵盖的 App 后端可按 Shadowrocket 日志补齐
 DOMAIN-SUFFIX,netease.com,DIRECT
