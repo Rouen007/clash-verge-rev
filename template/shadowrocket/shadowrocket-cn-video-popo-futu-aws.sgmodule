@@ -1,13 +1,13 @@
-#!name=国内视频与POPO直连-Futu走AWS
-#!desc=仅添加分流规则，不替换现有Config或节点。国内视频与网易POPO直连；Futu相关域名走AWS-Singapore-SS443。
+#!name=国内视频与POPO直连-Futu走PROXY
+#!desc=仅添加分流规则，不替换现有Config或节点。国内视频与网易POPO直连；Futu相关域名走Shadowrocket当前PROXY策略。
 
 [Rule]
-# Futu / 富途：走本机已添加的 AWS 新加坡节点
-DOMAIN-SUFFIX,futunn.com,AWS-Singapore-SS443
-DOMAIN-SUFFIX,futu5.com,AWS-Singapore-SS443
-DOMAIN-SUFFIX,futuhk.com,AWS-Singapore-SS443
-DOMAIN-SUFFIX,futuholdings.com,AWS-Singapore-SS443
-DOMAIN-SUFFIX,futu.com,AWS-Singapore-SS443
+# Futu / 富途：走 Shadowrocket 当前选择的 PROXY 策略，不绑定特定节点
+DOMAIN-SUFFIX,futunn.com,PROXY
+DOMAIN-SUFFIX,futu5.com,PROXY
+DOMAIN-SUFFIX,futuhk.com,PROXY
+DOMAIN-SUFFIX,futuholdings.com,PROXY
+DOMAIN-SUFFIX,futu.com,PROXY
 
 # 网易 POPO：网易域名直连；未涵盖的 App 后端可按 Shadowrocket 日志补齐
 DOMAIN-SUFFIX,netease.com,DIRECT
