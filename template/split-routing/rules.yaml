@@ -1,4 +1,12 @@
 prepend:
+  - "DOMAIN-SUFFIX,tplogin.cn,DIRECT"
+  - "DOMAIN-SUFFIX,tplinkwifi.net,DIRECT"
+  - "DOMAIN-SUFFIX,miwifi.com,DIRECT"
+  - "DOMAIN-SUFFIX,asusrouter.com,DIRECT"
+  - "DOMAIN-SUFFIX,routerlogin.net,DIRECT"
+  - "DOMAIN-SUFFIX,routerlogin.com,DIRECT"
+  - "DOMAIN-SUFFIX,tendawifi.com,DIRECT"
+  - "DOMAIN-SUFFIX,melogin.cn,DIRECT"
   - "DOMAIN-SUFFIX,example.com,SplitRoute | Example"
 append: []
 delete: []
