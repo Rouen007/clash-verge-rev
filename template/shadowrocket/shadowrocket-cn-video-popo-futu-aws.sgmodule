@@ -70,6 +70,8 @@ DOMAIN-SUFFIX,futuholdings.com,PROXY
 DOMAIN-SUFFIX,futu.com,PROXY
 
 # 常用国内服务：取自 YToo 的直连例外
+DOMAIN-SUFFIX,10086.cn,DIRECT
+DOMAIN-SUFFIX,chinamobile.com,DIRECT
 DOMAIN-SUFFIX,baidu.com,DIRECT
 DOMAIN-SUFFIX,baidubcr.com,DIRECT
 DOMAIN-SUFFIX,bdstatic.com,DIRECT
