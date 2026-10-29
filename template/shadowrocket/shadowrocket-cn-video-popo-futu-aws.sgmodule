@@ -1,6 +1,9 @@
 #!name=手机分流-默认PROXY
 #!desc=国内视频/常用国内服务、网易POPO及Apple常规服务直连；Google/OpenAI/Claude/GitHub/Telegram/LINE、Apple Push/Relay、Copilot与Futu走当前PROXY；其余未匹配流量默认PROXY。不包含节点或订阅凭据。
 
+# 节点的 UDP Relay / Proxy Pass 在 Shadowrocket 节点设置中调整；此规则模块只决定走 DIRECT 或当前 PROXY。
+# AWS 服务器已启用 UDP 时，也要确认客户端节点支持 UDP；蜂窝网络可能另有差异。
+
 [Rule]
 # sub.conf 基础直连规则：本地/私有地址与邮件端口直连
 GEOIP,PRIVATE,DIRECT,no-resolve
